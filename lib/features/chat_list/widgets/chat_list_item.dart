@@ -13,24 +13,37 @@ class ChatListItem extends StatelessWidget {
   final Chat chat;
   final VoidCallback onTap;
 
+  static const double _avatarSize = 48;
+  static const double _avatarBorderWidth = 2;
+  static const double _unreadBadgeSize = 20;
+
   @override
   Widget build(BuildContext context) {
     return ListTile(
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      leading: CircleAvatar(
-        radius: 28,
-        backgroundColor: Colors.grey.shade300,
-        child: Text(
-          chat.contact.name.isNotEmpty ? chat.contact.name[0].toUpperCase() : '?',
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black54),
+      leading: Container(
+        width: _avatarSize,
+        height: _avatarSize,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.contactBorderGreen, width: _avatarBorderWidth),
+          color: Colors.grey.shade300,
+        ),
+        child: ClipOval(
+          child: Center(
+            child: Text(
+              chat.contact.name.isNotEmpty ? chat.contact.name[0].toUpperCase() : '?',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black54),
+            ),
+          ),
         ),
       ),
       title: Text(
         chat.contact.name,
         style: const TextStyle(
           color: AppColors.chatName,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w600,
           fontSize: 16,
         ),
       ),
@@ -56,14 +69,16 @@ class ChatListItem extends StatelessWidget {
             const SizedBox(height: 4),
             if (chat.unreadCount > 0)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                width: _unreadBadgeSize,
+                height: _unreadBadgeSize,
+                alignment: Alignment.center,
                 decoration: const BoxDecoration(
                   color: AppColors.unreadBadgeGreen,
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                  shape: BoxShape.circle,
                 ),
                 child: Text(
                   '${chat.unreadCount}',
-                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
                 ),
               )
             else

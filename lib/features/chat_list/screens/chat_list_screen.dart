@@ -29,79 +29,138 @@ class ChatListScreen extends StatelessWidget {
 class _ChatListView extends StatelessWidget {
   const _ChatListView();
 
+  static const double _headerHeight = 56;
+  static const double _headerPaddingHorizontal = 16;
+  static const double _cardTopRadius = 28;
+  static const double _cardPaddingTop = 16;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Row(
-          mainAxisSize: MainAxisSize.min,
+      body: SafeArea(
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            Icon(Icons.chat_bubble, size: 28),
-            SizedBox(width: 8),
-            Text('WhatsApp'),
+            _buildBackground(),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildHeader(),
+                BlocBuilder<ChatListBloc, ChatListState>(
+                  buildWhen: (a, b) => a.chats != b.chats,
+                  builder: (context, state) {
+                    final contacts = state.chats.map((c) => c.contact).toList();
+                    return StatusReel(contacts: contacts);
+                  },
+                ),
+                Expanded(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: AppColors.cardBackground,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(_cardTopRadius)),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(_cardTopRadius)),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: _cardPaddingTop),
+                          BlocBuilder<ChatListBloc, ChatListState>(
+                            buildWhen: (a, b) => a.selectedTab != b.selectedTab,
+                            builder: (context, state) {
+                              return ChatListTabs(
+                                selectedTab: state.selectedTab,
+                                onTabSelected: (tab) =>
+                                    context.read<ChatListBloc>().add(ChatListTabChanged(tab: tab)),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          Expanded(
+                            child: BlocBuilder<ChatListBloc, ChatListState>(
+                              buildWhen: (a, b) => a.chats != b.chats || a.status != b.status,
+                              builder: (context, state) {
+                                if (state.status == ChatListStatus.loading && state.chats.isEmpty) {
+                                  return const Center(child: CircularProgressIndicator());
+                                }
+                                if (state.status == ChatListStatus.error && state.chats.isEmpty) {
+                                  return Center(child: Text(state.errorMessage ?? 'Error'));
+                                }
+                                final chats = state.selectedTab == ChatListTab.groups ? <Chat>[] : state.chats;
+                                if (chats.isEmpty) {
+                                  return const Center(child: Text('No chats'));
+                                }
+                                return ListView.builder(
+                                  padding: const EdgeInsets.only(
+                                    bottom: ChatBottomNavBar.dockHeight + ChatBottomNavBar.dockMargin,
+                                  ),
+                                  itemCount: chats.length,
+                                  itemBuilder: (context, index) {
+                                    final chat = chats[index];
+                                    return ChatListItem(
+                                      chat: chat,
+                                      onTap: () => _openChat(context, chat),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Positioned(
+              left: ChatBottomNavBar.dockMargin,
+              right: ChatBottomNavBar.dockMargin,
+              bottom: ChatBottomNavBar.dockMargin,
+              child: ChatBottomNavBar(),
+            ),
           ],
         ),
       ),
-      body: Column(
-        children: [
-          BlocBuilder<ChatListBloc, ChatListState>(
-            buildWhen: (a, b) => a.chats != b.chats,
-            builder: (context, state) {
-              final contacts = state.chats.map((c) => c.contact).toList();
-              return StatusReel(contacts: contacts);
-            },
-          ),
-          Expanded(
-            child: Container(
-              decoration: const BoxDecoration(
+    );
+  }
+
+  Widget _buildBackground() {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.primaryDarkGreen,
+            AppColors.gradientMiddle,
+            AppColors.nearBlack,
+          ],
+          stops: [0.0, 0.55, 1.0],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return SizedBox(
+      height: _headerHeight,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: _headerPaddingHorizontal),
+        child: const Row(
+          children: [
+            Icon(Icons.chat_bubble, size: 28, color: AppColors.cardBackground),
+            SizedBox(width: 8),
+            Text(
+              'Whatsapp',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
                 color: AppColors.cardBackground,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              child: Column(
-                children: [
-                  BlocBuilder<ChatListBloc, ChatListState>(
-                    buildWhen: (a, b) => a.selectedTab != b.selectedTab,
-                    builder: (context, state) {
-                      return ChatListTabs(
-                        selectedTab: state.selectedTab,
-                        onTabSelected: (tab) => context.read<ChatListBloc>().add(ChatListTabChanged(tab: tab)),
-                      );
-                    },
-                  ),
-                  Expanded(
-                    child: BlocBuilder<ChatListBloc, ChatListState>(
-                      buildWhen: (a, b) => a.chats != b.chats || a.status != b.status,
-                      builder: (context, state) {
-                        if (state.status == ChatListStatus.loading && state.chats.isEmpty) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
-                        if (state.status == ChatListStatus.error && state.chats.isEmpty) {
-                          return Center(child: Text(state.errorMessage ?? 'Error'));
-                        }
-                        final chats = state.selectedTab == ChatListTab.groups ? <Chat>[] : state.chats;
-                        if (chats.isEmpty) {
-                          return const Center(child: Text('No chats'));
-                        }
-                        return ListView.builder(
-                          itemCount: chats.length,
-                          itemBuilder: (context, index) {
-                            final chat = chats[index];
-                            return ChatListItem(
-                              chat: chat,
-                              onTap: () => _openChat(context, chat),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-      bottomNavigationBar: const ChatBottomNavBar(),
     );
   }
 
