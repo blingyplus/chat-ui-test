@@ -22,19 +22,25 @@ class ChatScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => ChatBloc(context.read<ChatRepository>(), chatId)
-        ..add(ChatMessagesLoadRequested(chatId)),
+      create: (context) =>
+          ChatBloc(context.read<ChatRepository>(), chatId)
+            ..add(ChatMessagesLoadRequested(chatId)),
       child: _ChatView(chatId: chatId, contactName: contactName),
     );
   }
 }
 
-class _ChatView extends StatelessWidget {
+class _ChatView extends StatefulWidget {
   const _ChatView({required this.chatId, required this.contactName});
 
   final int chatId;
   final String contactName;
 
+  @override
+  State<_ChatView> createState() => _ChatViewState();
+}
+
+class _ChatViewState extends State<_ChatView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,14 +55,19 @@ class _ChatView extends StatelessWidget {
               radius: 18,
               backgroundColor: Colors.grey.shade300,
               child: Text(
-                contactName.isNotEmpty ? contactName[0].toUpperCase() : '?',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black54),
+                widget.contactName.isNotEmpty
+                    ? widget.contactName[0].toUpperCase()
+                    : '?',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black54,
+                ),
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                contactName,
+                widget.contactName,
                 style: const TextStyle(fontSize: 18),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -70,12 +81,15 @@ class _ChatView extends StatelessWidget {
             child: Container(
               color: AppColors.listBackground,
               child: BlocBuilder<ChatBloc, ChatState>(
-                buildWhen: (a, b) => a.messages != b.messages || a.status != b.status,
+                buildWhen: (a, b) =>
+                    a.messages != b.messages || a.status != b.status,
                 builder: (context, state) {
-                  if (state.status == ChatStatus.loading && state.messages.isEmpty) {
+                  if (state.status == ChatStatus.loading &&
+                      state.messages.isEmpty) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  if (state.status == ChatStatus.error && state.messages.isEmpty) {
+                  if (state.status == ChatStatus.error &&
+                      state.messages.isEmpty) {
                     return Center(child: Text(state.errorMessage ?? 'Error'));
                   }
                   if (state.messages.isEmpty) {
@@ -85,14 +99,19 @@ class _ChatView extends StatelessWidget {
                     reverse: true,
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     itemCount: state.messages.length,
-                    itemBuilder: (context, index) => MessageBubble(message: state.messages[state.messages.length - 1 - index]),
+                    itemBuilder: (context, index) {
+                      final message = state.messages[state.messages.length - 1 - index];
+                      return MessageBubble(message: message);
+                    },
                   );
                 },
               ),
             ),
           ),
           MessageInput(
-            onSend: (text) => context.read<ChatBloc>().add(ChatMessageSent(chatId: chatId, content: text)),
+            onSend: (text) => context.read<ChatBloc>().add(
+              ChatMessageSent(chatId: widget.chatId, content: text),
+            ),
           ),
           SafeArea(
             top: false,
@@ -100,7 +119,12 @@ class _ChatView extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: TextButton.icon(
                 onPressed: () {
-                  context.read<ChatBloc>().add(ChatSimulateReceived(chatId: chatId, content: 'Simulated reply'));
+                  context.read<ChatBloc>().add(
+                    ChatSimulateReceived(
+                      chatId: widget.chatId,
+                      content: 'Simulated reply',
+                    ),
+                  );
                 },
                 icon: const Icon(Icons.reply, size: 18),
                 label: const Text('Simulate receive'),

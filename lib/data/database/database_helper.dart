@@ -87,13 +87,13 @@ class DatabaseHelper {
     });
 
     final now = DateTime.now();
-    final oct2 = DateTime(now.year, 10, 2).millisecondsSinceEpoch;
+    final seedTime = now.subtract(const Duration(days: 1)).millisecondsSinceEpoch;
 
     for (var i = 1; i <= 6; i++) {
       await db.insert(DatabaseConstants.tableChats, {
         DatabaseConstants.columnChatContactId: i,
         DatabaseConstants.columnLastMessagePreview: _lastMessageForContact(i),
-        DatabaseConstants.columnLastMessageAt: oct2,
+        DatabaseConstants.columnLastMessageAt: seedTime,
         DatabaseConstants.columnUnreadCount: _unreadForContact(i),
       });
     }
@@ -129,6 +129,7 @@ class DatabaseHelper {
   }
 
   Future<void> _seedMessages(Database db) async {
+    final baseTime = DateTime.now().subtract(const Duration(days: 1));
     final messages = [
       (1, 'Hi how are you?', 0, 2),
       (1, 'I am good, thanks!', 1, 2),
@@ -137,13 +138,14 @@ class DatabaseHelper {
       (4, 'Hi how are you?', 1, 0),
       (5, 'Hi how are you?', 1, 0),
     ];
-    final oct2 = DateTime(DateTime.now().year, 10, 2).millisecondsSinceEpoch;
-    for (final m in messages) {
+    for (var i = 0; i < messages.length; i++) {
+      final m = messages[i];
+      final createdAt = baseTime.add(Duration(minutes: i)).millisecondsSinceEpoch;
       await db.insert(DatabaseConstants.tableMessages, {
         DatabaseConstants.columnMessageChatId: m.$1,
         DatabaseConstants.columnContent: m.$2,
         DatabaseConstants.columnIsFromMe: m.$3,
-        DatabaseConstants.columnCreatedAt: oct2,
+        DatabaseConstants.columnCreatedAt: createdAt,
         DatabaseConstants.columnRead: m.$4,
       });
     }
