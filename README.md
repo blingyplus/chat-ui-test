@@ -2,6 +2,12 @@
 
 A Flutter app that replicates a WhatsApp-style chat list and conversation screen. All data is stored locally using SQLite; there is no backend or network.
 
+## Screenshot & build
+
+![Chat list screen](image.png)
+
+**[Download APK](https://drive.google.com/file/d/17WePMYPSHYB4AzcGaGdEff1JzykNzY4R/view?usp=drive_link)** (Google Drive)
+
 ## Tech stack
 
 - **Flutter** – UI
